@@ -73,8 +73,8 @@ VERSION = "0.95.1"
 
 twx, twy = shutil.get_terminal_size()
 
-banner = "** RWMS {} by shakeyourbunny ".format(VERSION)
-print("{:*<{tw}}".format(banner, tw=twx))
+banner = f"** RWMS {VERSION} by shakeyourbunny "
+print(f"{banner:*<{twx}}")
 print("bugs: https://github.com/shakeyourbunny/RWMS/issues")
 print("database updates: visit https://github.com/shakeyourbunny/RWMSDB/issues")
 print("")
@@ -184,7 +184,7 @@ if args.dump_configuration_nowait:
 ## start script
 if updatecheck:
     if RWMS.update.is_update_available(VERSION):
-        print("*** Update available, new version is {} ***".format(RWMS.update.__load_version_from_repo()))
+        print(f'*** Update available, new version is {RWMS.update.__load_version_from_repo()} ***')
         print("")
         print("Release: https://github.com/shakeyourbunny/RWMS/releases")
         print("")
@@ -253,23 +253,23 @@ def cleanup_garbage_name(garbagename):
 #
 def load_mod_data(cats, db, basedir, modsource):
     mod_details = dict()
-    folderlist = os.listdir(basedir)
+    folder_list = os.listdir(basedir)
     name = str()
-    for moddirs in folderlist:
-        aboutxml = os.path.join(basedir, moddirs, "About", "About.xml")
+    for mod_dirs in folder_list:
+        aboutxml = os.path.join(basedir, mod_dirs, "About", "About.xml")
         if os.path.isfile(aboutxml):
             try:
                 xml = ET.parse(aboutxml)
                 name = xml.find('name').text
             except ET.ParseError:
-                print("Mod ID is '{}'".format(moddirs))
-                print("** error: malformed XML in {}".format(aboutxml))
+                print(f"Mod ID is '{mod_dirs}'")
+                print(f"** error: malformed XML in {aboutxml}")
                 # print("Line {}, Offset {}".format(pe.lineno, pe.offset))
                 print("")
                 print("Please contact mod author for clarification.")
                 if RWMS.configuration.detect_rimworld_steam():
-                    workshopurl = "https://steamcommunity.com/sharedfiles/filedetails/?id=" + moddirs
-                    print("(trying to workaround by loading steam workshop page {})".format(workshopurl))
+                    workshopurl = "https://steamcommunity.com/sharedfiles/filedetails/?id=" + mod_dirs
+                    print(f"(trying to workaround by loading steam workshop page {workshopurl})")
                     try:
                         name = str(BeautifulSoup(urlopen(workshopurl), "html.parser").title.string)
                         if 'Steam Community :: Error' in name:
@@ -278,7 +278,7 @@ def load_mod_data(cats, db, basedir, modsource):
                     except:
                         print("Could not open workshop page. sorry.")
                     name = name.replace('Steam Workshop :: ', '')
-                    print("Matching mod ID '{}' with '{}'".format(moddirs, name))
+                    print(f"Matching mod ID '{mod_dirs}' with '{name}'")
                     print("")
                 else:
                     RWMS.error.fatal_error("(cannot do a workaround, no steam installation)", wait_on_error)
@@ -291,26 +291,26 @@ def load_mod_data(cats, db, basedir, modsource):
                 try:
                     score = cats[db["db"][name]][0]
                 except:
-                    print("FIXME: mod '{}' has an unknown category '{}'. stop.".format(name, db["db"][name]))
+                    print(f"FIXME: mod '{name}' has an unknown category '{db['db'][name]}'. Stop.")
                     RWMS.error.fatal_error("please report this error to the database maintainer.", wait_on_error)
                     sys.exit(1)
 
                 # print("mod {} has a score of {}".format(name, score))
                 try:
-                    mod_entry = (moddirs, float(score), name, modsource)
+                    mod_entry = (mod_dirs, float(score), name, modsource)
 
                 except KeyError:
                     RWMS.error.fatal_error(
-                        "could not construct dictionary entry for mod {}, score {}".format(name, score), wait_on_error)
+                        f"could not construct dictionary entry for mod {name}, score {score}", wait_on_error)
                     sys.exit(1)
             else:
                 # print("mod '{}' is not in database, adding to unknown list.".format(name))
                 # note: need the modsource later for distinguishing local vs workshop mod in unknown mod report
-                mod_entry = (moddirs, None, name, modsource)
+                mod_entry = (mod_dirs, None, name, modsource)
 
-            mod_details[moddirs] = mod_entry
+            mod_details[mod_dirs] = mod_entry
         else:
-            print("could not find metadata for item " + moddirs + " (skipping, is probably a scenario)!")
+            print("could not find metadata for item " + mod_dirs + " (skipping, is probably a scenario)!")
             name = ""
     return mod_details
 
@@ -328,21 +328,20 @@ if not cat:
 # categories
 database = RWMS.database.download_database(database_url)
 if not database:
-    RWMS.error.fatal_error("Error loading scoring database {}.".format(database_url), wait_on_error)
+    RWMS.error.fatal_error(f"Error loading scoring database {database_url}.", wait_on_error)
     wait_for_exit(1, wait_on_error)
 else:
     print("")
-    print("Database (v{}, date: {}) successfully loaded.".format(database["version"],
-                                                                 database["timestamp"]))
-    print("{} known mods, {} contributors.".format(len(database["db"]), len(database["contributor"])))
+    print(f"Database (v{database['version']}, date: {database['timestamp']}) successfully loaded.")
+    print(f'{len(database["db"])} known mods, {len(database["contributor"])} contributors.')
 
 # if len(sys.argv) > 1 and sys.argv[1] == "contributors":
 if args.contributors:
-    print("{:<30} {:<6}".format('Contributor', '# Mods'))
+    print(f"{'Contributor':<30} {'# Mods':<6}")
     d = sorted(database["contributor"].items(), key=itemgetter(1), reverse=True)
     for contributors in d:
         if contributors[1] >= 20:
-            print("{:<30} {:>5}".format(contributors[0], contributors[1]))
+            print(f"{contributors[0]:<30} {contributors[1]:>5}")
     print("\nfor a full list of contributors visit:")
     print("https://github.com/shakeyourbunny/RWMSDB/blob/master/CONTRIBUTING.md")
     wait_for_exit(0, wait_on_exit)
@@ -350,14 +349,14 @@ else:
     contributors = collections.Counter(database["contributor"])
     print("Top contributors: ", end='')
     for c in contributors.most_common(5):
-        print("{} ({}), ".format(c[0], c[1]), end='')
+        print(f"{c[0]} ({c[1]}), ", end='')
     print("")
 
 modsconfigfile = RWMS.configuration.modsconfigfile()
 print("")
 print("Loading and parsing ModsConfig.xml")
 if not os.path.isfile(modsconfigfile):
-    RWMS.error.fatal_error("could not find ModsConfig.xml; detected: '{}'".format(modsconfigfile), wait_on_error)
+    RWMS.error.fatal_error(f"could not find ModsConfig.xml; detected: '{modsconfigfile}'", wait_on_error)
     wait_for_exit(1, wait_on_error)
 
 try:
@@ -381,16 +380,16 @@ if not disablesteam:
     if RWMS.configuration.detect_rimworld_steam() != "":
         if not os.path.isdir(steamworkshopdir):
             RWMS.error.fatal_error(
-                     "steam workshop directory '{}' could not be found. please check your installation and / or configuration file.".format(
-                         steamworkshopdir), wait_on_error)
+                f"steam workshop directory '{steamworkshopdir}' could not be found. please check your installation "
+                f"and / or configuration file.", wait_on_error)
             wait_for_exit(1, wait_on_error)
         mod_data_workshop = load_mod_data(cat, database, steamworkshopdir, "W")
 
 localmoddir = RWMS.configuration.detect_localmods_dir()
 if not os.path.isdir(localmoddir):
     RWMS.error.fatal_error(
-             "local mod directory '{}' could not be found. please check your installation and / or configuration file.".format(
-                 localmoddir), wait_on_error)
+        f"local mod directory '{localmoddir}' could not be found. please check your installation and / or "
+        f"configuration file.", wait_on_error)
     wait_for_exit(1, wait_on_error)
 mod_data_local = load_mod_data(cat, database, localmoddir, "L")
 
@@ -411,15 +410,15 @@ for mods in mods_enabled_list:
 
     except KeyError:
         # print("Unknown mod ID {}, deactivating it from mod list.".format(mods))
-        print("Unknown ACTIVE mod ID {} found..".format(mods))
+        print(f"Unknown ACTIVE mod ID {mods} found..")
         mods_unknown_active.append(mods)
 
 print("Sorting mods.")
 be_sleepy(1.0, enabledelays)
 newlist = sorted(mods_data_active, key=itemgetter(1))
 print("")
-print("{} subscribed mods, {} ({} known, {} unknown) enabled mods".format(len(mod_data_full), len(mods_enabled_list),
-                                                                          len(mods_data_active) + 1, len(mods_unknown_active)))
+print(f"{len(mod_data_full)} subscribed mods, {len(mods_enabled_list)} ({len(mods_data_active) + 1} known,"
+      f" {len(mods_unknown_active)} unknown) enabled mods")
 be_sleepy(2.0, enabledelays)
 
 if not os.path.isfile(modsconfigfile):
@@ -499,13 +498,13 @@ else:
                 # not printing actual path for security/privacy
                 mod_loc = os.path.join("<RimWorld install directory>", "Mods", mod_entry[0])
             elif not disablesteam:
-                mod_loc = "https://steamcommunity.com/sharedfiles/filedetails/?id={}".format(mod_entry[0])
+                mod_loc = f"https://steamcommunity.com/sharedfiles/filedetails/?id={mod_entry[0]}"
             else:
                 mod_loc = ""
             unknown_diff[mod_entry[2]] = ("not_categorized", mod_loc)
         DB["unknown"] = unknown_diff
 
-        unknownfile = "rwms_unknown_mods_{}.json.txt".format(now_time)
+        unknownfile = f"rwms_unknown_mods_{now_time}.json.txt"
         print("Writing unknown mods report.")
         print("")
         with open(unknownfile, "w", encoding="UTF-8", newline="\n") as f:
@@ -521,7 +520,7 @@ else:
                                 "You can either submit the data file manually on the RWMSDB issue tracker or on Steam / " +
                                 "Ludeon forum thread. Thank you!", 78))
             print("")
-            print("Data file name is {}".format(unknownfile))
+            print(f"Data file name is {unknownfile}")
             print("")
 
             while True:
@@ -556,7 +555,7 @@ if write_modsconfig:
     # do backup
     backupfile = modsconfigfile + ".backup-{}".format(now_time)
     shutil.copy(modsconfigfile, backupfile)
-    print("Backed up ModsConfig.xml to {}.".format(backupfile))
+    print(f"Backed up ModsConfig.xml to {backupfile}.")
 
     print("Writing new ModsConfig.xml.")
     modsconfigstr = ET.tostring(doc.getroot(), encoding='unicode')

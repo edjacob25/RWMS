@@ -44,7 +44,7 @@ def load_value(section, entry, isBool=False):
     try:
         cfg.read(configfile)
     except:
-        print("Error parsing configuration file {}.".format(configfile))
+        print(f"Error parsing configuration file {configfile}.")
         input("Press ENTER to end program.")
         sys.exit(1)
 
@@ -178,14 +178,15 @@ def __check_dir(path):
     if os.path.isdir(path):
         return "OK " + path
     else:
-        return "ERR " + path
+        return f"ERR {path}"
 
 
 def __check_file(file):
     if os.path.isfile(file):
         return "OK " + file
     else:
-        return "ERR " + file
+        return f"ERR {file}"
+
 
 def __dump_configuration():
     """

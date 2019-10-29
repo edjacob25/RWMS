@@ -20,7 +20,7 @@ def download_database(url):
         with urlopen(url) as jsonurl:
             jsondata = jsonurl.read()
     except:
-        RWMS.error.fatal_error("could not open {}".format(url), wait_on_error)
+        RWMS.error.fatal_error(f"could not open {url}", wait_on_error)
         sys.exit(1)
     jsonurl.close()
 
