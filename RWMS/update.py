@@ -1,6 +1,6 @@
-## RimWorld ModSorter update module
-##
-## checks repo for newly commited versions and (in some point in the future) an inplace upgrade
+# RimWorld ModSorter update module
+#
+# checks repo for newly committed versions and (in some point in the future) an inplace upgrade
 
 import sys
 from urllib.request import urlopen

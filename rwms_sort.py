@@ -9,9 +9,11 @@ import sys
 import textwrap
 import time
 import webbrowser
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ElementTree
 from argparse import ArgumentParser
 from operator import itemgetter
+from pathlib import Path
+from typing import Dict, Tuple
 from urllib.request import urlopen
 
 from bs4 import BeautifulSoup
@@ -25,9 +27,9 @@ import RWMS.update
 
 # ##################################################################################
 # helper functions
-def be_sleepy(howlong, ed=True):
+def be_sleepy(how_long: float, ed=True):
     if ed:
-        time.sleep(howlong)
+        time.sleep(how_long)
 
 
 def wait_for_exit(exit_code, wfo=True):
@@ -37,16 +39,16 @@ def wait_for_exit(exit_code, wfo=True):
     sys.exit(exit_code)
 
 
-def check_directory(dir):
-    if not os.path.exists(dir):
-        print("** Directory '{}' does not exist or is not accessible.".format(dir))
+def check_directory(directory: str):
+    if not os.path.exists(directory):
+        print(f"** Directory '{directory}' does not exist or is not accessible.")
         return False
     return True
 
 
 def print_dry_run(config_file, final_doc, mod_data):
     print("This is a dry run, nothing will be changed\n")
-    initial = [x.text for x in ET.parse(config_file).getroot().find('activeMods').findall('li')]
+    initial = [x.text for x in ElementTree.parse(config_file).getroot().find('activeMods').findall('li')]
     final = [x.text for x in final_doc.getroot().find('activeMods').findall('li')]
     for i, mod in enumerate(initial):
         initial_pos = i + 1
@@ -186,7 +188,7 @@ VERSION = "0.95.1"
 
 twx, twy = shutil.get_terminal_size()
 
-banner = f"** RWMS {VERSION} by shakeyourbunny "
+banner = f"** RWMS {VERSION} by shakeyourbunny"
 print(f"{banner:*<{twx}}")
 print("bugs: https://github.com/shakeyourbunny/RWMS/issues")
 print("database updates: visit https://github.com/shakeyourbunny/RWMSDB/issues")
@@ -205,7 +207,7 @@ parser.add_argument("--disable-tweaks", action="store_true", help="(override) di
 
 # misc options
 parser.add_argument("-d", "--dry-run", action="store_true", help="shows what would change, does not actually overrides "
-                                                                "any file")
+                                                                 "any file")
 parser.add_argument("--contributors", action="store_true", help="display contributors for RWMS(DB)")
 
 parser.add_argument("--dump-configuration", action="store_true",
@@ -229,26 +231,26 @@ parser.add_argument("--localmodsdir", action="store", help="(override) location 
 
 args = parser.parse_args()
 
-updatecheck = RWMS.configuration.load_value("rwms", "updatecheck", True)
-openbrowser = RWMS.configuration.load_value("rwms", "openbrowser", True)
+update_check = RWMS.configuration.load_value("rwms", "updatecheck", True)
+open_browser = RWMS.configuration.load_value("rwms", "openbrowser", True)
 wait_on_error = RWMS.configuration.load_value("rwms", "waitforkeypress_on_error", True)
 wait_on_exit = RWMS.configuration.load_value("rwms", "waitforkeypress_on_exit", True)
-disablesteam = RWMS.configuration.load_value("rwms", "disablesteam", True)
-dontremoveunknown = RWMS.configuration.load_value("rwms", "dontremoveunknown", False)
-enabledelays = RWMS.configuration.load_value("rwms", "enabledelaysinoutput", True)
-disabletweaks = RWMS.configuration.load_value("rwms", "disabletweaks", True)
+disable_steam = RWMS.configuration.load_value("rwms", "disablesteam", True)
+dont_remove_unknown = RWMS.configuration.load_value("rwms", "dontremoveunknown", False)
+enable_delays = RWMS.configuration.load_value("rwms", "enabledelaysinoutput", True)
+disable_tweaks = RWMS.configuration.load_value("rwms", "disabletweaks", True)
 
 # process command line switches
 # configuration file overrides
 if args.disable_steam:
-    disablesteam = True
+    disable_steam = True
 
 if args.dont_remove_unknown_mods:
-    dontremoveunknown = True
+    dont_remove_unknown = True
 
 if args.openbrowser:
-    updatecheck = True
-    openbrowser = True
+    update_check = True
+    open_browser = True
 
 if args.wait_error:
     wait_on_error = True
@@ -257,33 +259,33 @@ if args.wait:
     wait_on_exit = True
 
 if args.enable_delays:
-    enabledelays = True
+    enable_delays = True
 
 if args.disable_tweaks:
-    disabletweaks = True
+    disable_tweaks = True
 
 # directory overrides
 if args.steamdir:
-    disablesteam = False
+    disable_steam = False
     if not check_directory(args.steamdir):
         wait_for_exit(1, wait_on_error)
 
 if args.drmfreedir:
     if not check_directory(args.drmfreedir):
-        wait_on_exit(1, wait_on_error)
+        wait_for_exit(1, wait_on_error)
 
 if args.configdir:
     if not check_directory(args.configdir):
-        wait_on_exit(1, wait_on_error)
+        wait_for_exit(1, wait_on_error)
 
 if args.workshopdir:
-    disablesteam = False
+    disable_steam = False
     if not check_directory(args.workshopdir):
-        wait_on_exit(1, wait_on_error)
+        wait_for_exit(1, wait_on_error)
 
 if args.localmodsdir:
     if not check_directory(args.localmodsdir):
-        wait_on_exit(1, wait_on_error)
+        wait_for_exit(1, wait_on_error)
 
 # configuration dump
 if args.dump_configuration:
@@ -294,21 +296,21 @@ if args.dump_configuration_nowait:
     RWMS.configuration.__dump_configuration()
     sys.exit(0)
 
-## start script
-if updatecheck:
+# start script
+if update_check:
     if RWMS.update.is_update_available(VERSION):
         print(f'*** Update available, new version is {RWMS.update.__load_version_from_repo()} ***')
         print("")
         print("Release: https://github.com/shakeyourbunny/RWMS/releases")
         print("")
-        if openbrowser:
+        if open_browser:
             webbrowser.open_new("https://www.github.com/shakeyourbunny/RWMS/releases")
 
 if RWMS.configuration.detect_rimworld() == "":
     RWMS.error.fatal_error("no valid RimWorld installation detected!", wait_on_error)
     wait_for_exit(0, wait_on_error)
 
-categories_url = 'https://raw.githubusercontent.com/shakeyourbunny/RWMSDB/master/rwms_db_categories.json'
+categories_url = "https://raw.githubusercontent.com/shakeyourbunny/RWMSDB/master/rwms_db_categories.json"
 database_url = "https://raw.githubusercontent.com/shakeyourbunny/RWMSDB/master/rwmsdb.json"
 
 
@@ -332,7 +334,6 @@ else:
     print(f"Database (v{database['version']}, date: {database['timestamp']}) successfully loaded.")
     print(f'{len(database["db"])} known mods, {len(database["contributor"])} contributors.')
 
-# if len(sys.argv) > 1 and sys.argv[1] == "contributors":
 if args.contributors:
     print(f"{'Contributor':<30} {'# Mods':<6}")
     d = sorted(database["contributor"].items(), key=itemgetter(1), reverse=True)
@@ -349,22 +350,22 @@ else:
         print(f"{c[0]} ({c[1]}), ", end='')
     print("")
 
-modsconfigfile = RWMS.configuration.modsconfigfile()
+mods_config_file = RWMS.configuration.modsconfigfile()
 print("")
 print("Loading and parsing ModsConfig.xml")
-if not os.path.isfile(modsconfigfile):
-    RWMS.error.fatal_error(f"could not find ModsConfig.xml; detected: '{modsconfigfile}'", wait_on_error)
+if not mods_config_file.exists():
+    RWMS.error.fatal_error(f"could not find ModsConfig.xml; detected: '{mods_config_file}'", wait_on_error)
     wait_for_exit(1, wait_on_error)
 
 try:
-    xml = ET.parse(modsconfigfile)
+    xml = ElementTree.parse(mods_config_file)
 except:
     RWMS.error.fatal_error("could not parse XML from ModsConfig.xml.", wait_on_error)
     wait_for_exit(1, wait_on_error)
 
 xml = xml.find('activeMods')
 mods_enabled_list = [t.text for t in xml.findall('li')]
-if not "Core" in mods_enabled_list:
+if "Core" not in mods_enabled_list:
     mods_enabled_list.append("Core")
 
 # check auf unknown mods
@@ -372,27 +373,25 @@ print("Loading mod data.")
 mod_data_workshop = dict()
 mod_data_local = dict()
 
-if not disablesteam:
-    steamworkshopdir = RWMS.configuration.detect_steamworkshop_dir()
+if not disable_steam:
+    steam_workshop_dir = RWMS.configuration.detect_steamworkshop_dir()
     if RWMS.configuration.detect_rimworld_steam() != "":
-        if not os.path.isdir(steamworkshopdir):
-            RWMS.error.fatal_error(
-                f"steam workshop directory '{steamworkshopdir}' could not be found. please check your installation "
-                f"and / or configuration file.", wait_on_error)
+        if not os.path.isdir(steam_workshop_dir):
+            RWMS.error.fatal_error(f"steam workshop directory '{steam_workshop_dir}' could not be found. please check "
+                                   f"your installation and / or configuration file.", wait_on_error)
             wait_for_exit(1, wait_on_error)
-        mod_data_workshop = load_mod_data(cat, database, steamworkshopdir, "W")
+        mod_data_workshop = load_mod_data(categories, database, steam_workshop_dir, "W")
 
-localmoddir = RWMS.configuration.detect_localmods_dir()
-if not os.path.isdir(localmoddir):
-    RWMS.error.fatal_error(
-        f"local mod directory '{localmoddir}' could not be found. please check your installation and / or "
-        f"configuration file.", wait_on_error)
+local_mod_dir = RWMS.configuration.detect_localmods_dir()
+if not os.path.isdir(local_mod_dir):
+    RWMS.error.fatal_error(f"local mod directory '{local_mod_dir}' could not be found. please check your installation "
+                           f"and / or configuration file.", wait_on_error)
     wait_for_exit(1, wait_on_error)
-mod_data_local = load_mod_data(cat, database, localmoddir, "L")
+mod_data_local = load_mod_data(categories, database, local_mod_dir, "L")
 
 mod_data_full = {**mod_data_local, **mod_data_workshop}
-mod_data_known = {} # all found known mods, regardless of their active status
-mod_data_unknown = {} # all found unknown mods, regardless of their active status
+mod_data_known = {}  # all found known mods, regardless of their active status
+mod_data_unknown = {}  # all found unknown mods, regardless of their active status
 for mods, mod_entry in mod_data_full.items():
     if mod_entry[1] is not None:
         mod_data_known[mods] = mod_entry
@@ -411,17 +410,17 @@ for mods in mods_enabled_list:
         mods_unknown_active.append(mods)
 
 print("Sorting mods.")
-be_sleepy(1.0, enabledelays)
-newlist = sorted(mods_data_active, key=itemgetter(1))
+be_sleepy(1.0, enable_delays)
+new_list = sorted(mods_data_active, key=itemgetter(1))
 print("")
 print(f"{len(mod_data_full)} subscribed mods, {len(mods_enabled_list)} ({len(mods_data_active) + 1} known,"
       f" {len(mods_unknown_active)} unknown) enabled mods")
-be_sleepy(2.0, enabledelays)
+be_sleepy(2.0, enable_delays)
 
-if not os.path.isfile(modsconfigfile):
-    RWMS.error.fatal_error("error accessing " + modsconfigfile, wait_on_error)
+if not mods_config_file.exists():
+    RWMS.error.fatal_error(f"error accessing {mods_config_file}", wait_on_error)
     sys.exit(1)
-doc = ET.parse(modsconfigfile)
+doc = ElementTree.parse(mods_config_file)
 xml = doc.getroot()
 
 try:
@@ -435,11 +434,10 @@ except:
 xml = xml.find('activeMods')
 for li in xml.findall('li'):
     xml.remove(li)
-# ET.dump(doc)
 
 now_time = time.strftime('%Y%m%d-%H%M', time.localtime(time.time()))
 
-write_modsconfig = False
+write_mods_config = False
 
 if args.reset_to_core:
     while True:
@@ -448,28 +446,26 @@ if args.reset_to_core:
             break
     if data.lower() == "y":
         print("Resetting your ModsConfig.xml to Core only!")
-        xml_sorted = ET.SubElement(xml, 'li')
+        xml_sorted = ElementTree.SubElement(xml, 'li')
         xml_sorted.text = "Core"
-        write_modsconfig = True
+        write_mods_config = True
 else:
     # handle known active mods
-    for mods in newlist:
-        # print(mods)
+    for mods in new_list:
         if mods[0] == "":
             print("skipping, empty?")
         else:
-            xml_sorted = ET.SubElement(xml, 'li')
+            xml_sorted = ElementTree.SubElement(xml, 'li')
             xml_sorted.text = str(mods[0])
-        # ET.dump(doc)
 
     # handle unknown active mods if dont-remove-unknown-mods enabled
-    if dontremoveunknown and mods_unknown_active:
+    if dont_remove_unknown and mods_unknown_active:
         print("Adding in unknown mods in the load order (at the bottom).")
         for mods in mods_unknown_active:
             if mods == "":
                 print("skipping, empty?")
             else:
-                xml_sorted = ET.SubElement(xml, 'li')
+                xml_sorted = ElementTree.SubElement(xml, 'li')
                 xml_sorted.text = str(mods)
 
     # generate unknown mod report for all found unknown mods, regardless of their active status
@@ -494,7 +490,7 @@ else:
             if mod_entry[3] == "L":
                 # not printing actual path for security/privacy
                 mod_loc = os.path.join("<RimWorld install directory>", "Mods", mod_entry[0])
-            elif not disablesteam:
+            elif not disable_steam:
                 mod_loc = f"https://steamcommunity.com/sharedfiles/filedetails/?id={mod_entry[0]}"
             else:
                 mod_loc = ""
@@ -513,9 +509,9 @@ else:
                 issuebody = f.read()
             RWMS.issue_mgmt.create_issue('unknown mods found by ' + RWMS.issue_mgmt.get_github_user(), issuebody)
         else:
-            print(textwrap.fill("For the full list of unknown mods see the written data file in the current directory. " +
-                                "You can either submit the data file manually on the RWMSDB issue tracker or on Steam / " +
-                                "Ludeon forum thread. Thank you!", 78))
+            print(textwrap.fill("For the full list of unknown mods see the written data file in the current "
+                                "directory. You can either submit the data file manually on the RWMSDB issue tracker "
+                                "or on Steam / Ludeon forum thread. Thank you!", 78))
             print("")
             print(f"Data file name is {unknownfile}")
             print("")
@@ -529,7 +525,7 @@ else:
                 print("")
                 webbrowser.open_new("https://www.github.com/shakeyourbunny/RWMSDB/issues")
 
-        if dontremoveunknown:
+        if dont_remove_unknown:
             print("Unknown, ACTIVE mods will be written at the end of the mod list.")
         else:
             print("Unknown, ACTIVE mods will be removed.")
@@ -537,8 +533,8 @@ else:
         print("lucky, no unknown mods detected!")
 
     if args.dry_run:
-        print_dry_run(modsconfigfile, doc, mod_data_full)
-        write_modsconfig = False
+        print_dry_run(mods_config_file, doc, mod_data_full)
+        write_mods_config = False
 
     # ask for confirmation to write the ModsConfig.xml anyway
     while True and not args.dry_run:
@@ -546,22 +542,22 @@ else:
         if data.lower() in ('y', 'n'):
             break
     if data.lower() == 'y':
-        write_modsconfig = True
+        write_mods_config = True
 
-if write_modsconfig:
+if write_mods_config:
     # do backup
-    backupfile = modsconfigfile + ".backup-{}".format(now_time)
-    shutil.copy(modsconfigfile, backupfile)
-    print(f"Backed up ModsConfig.xml to {backupfile}.")
+    backup_file = mods_config_file.with_suffix(f".backup-{now_time}.xml")
+    shutil.copy(str(mods_config_file), str(backup_file))
+    print(f"Backed up ModsConfig.xml to {backup_file}.")
 
     print("Writing new ModsConfig.xml.")
-    modsconfigstr = ET.tostring(doc.getroot(), encoding='unicode')
-    with open(modsconfigfile, "w", encoding='utf-8-sig', newline="\n") as f:
+    mods_config_str = ElementTree.tostring(doc.getroot(), encoding='unicode')
+    with open(str(mods_config_file), "w", encoding='utf-8-sig', newline="\n") as f:
         # poor man's pretty print
         f.write('<?xml version="1.0" encoding="utf-8"?>\n')
-        modsconfigstr = modsconfigstr.replace('</li><li>', '</li>\n    <li>').replace('</li></activeMods>',
-                                                                                      '</li>\n  </activeMods>')
-        f.write(modsconfigstr)
+        mods_config_str = mods_config_str.replace('</li><li>', '</li>\n    <li>').replace('</li></activeMods>',
+                                                                                          '</li>\n  </activeMods>')
+        f.write(mods_config_str)
     print("Writing done.")
 else:
     print("ModsConfig.xml was NOT modified.")
