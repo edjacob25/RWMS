@@ -10,7 +10,7 @@ import textwrap
 import time
 import webbrowser
 import xml.etree.ElementTree as ElementTree
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from operator import itemgetter
 from pathlib import Path
 from typing import Dict, Tuple
@@ -23,6 +23,8 @@ import RWMS.database
 import RWMS.error
 import RWMS.issue_mgmt
 import RWMS.update
+
+VERSION = "0.95.1"
 
 
 # ##################################################################################
@@ -70,6 +72,44 @@ def print_dry_run(config_file, final_doc, mod_data):
 
 
 #####################################################################################################################
+def get_args() -> Namespace:
+    parser = ArgumentParser()
+
+    # configuration overrides
+    parser.add_argument("--disable-steam", action="store_true", help="(override) disable steam detection")
+    parser.add_argument("--dont-remove-unknown-mods", action="store_true", help="(override) do not remove unknown mods")
+    parser.add_argument("--openbrowser", action="store_true", help="(override) opens browser if new version available, "
+                                                                   "implies force updatecheck ")
+    parser.add_argument("--disable-tweaks", action="store_true", help="(override) disable user tweaks")
+
+    # misc options
+    parser.add_argument("-d", "--dry-run", action="store_true", help="shows what would change, does not actually "
+                                                                     "overrides any file")
+    parser.add_argument("--contributors", action="store_true", help="display contributors for RWMS(DB)")
+
+    parser.add_argument("--dump-configuration", action="store_true",
+                        help="displays the current configuration RWMS is thinking of")
+    parser.add_argument("--dump-configuration-nowait", action="store_true",
+                        help="displays the current configuration RWMS is thinking of, forces no waiting (for scripts)")
+
+    parser.add_argument("--reset-to-core", action="store_true", help="reset mod list to Core only")
+
+    # delay options
+    parser.add_argument("--wait-error", action="store_true", help="(override) wait on errors")
+    parser.add_argument("--wait", action="store_true", help="(override) wait on exit")
+    parser.add_argument("--enable-delays", action="store_true", help="(override) enable some delays")
+
+    # directory options
+    parser.add_argument("--steamdir", action="store", help="(override) Steam installation directory")
+    parser.add_argument("--drmfreedir", action="store", help="(override) DRM free directory of RimWorld")
+    parser.add_argument("--configdir", action="store",
+                        help="(override) location of game configuration / save directory")
+    parser.add_argument("--workshopdir", action="store", help="(override) location of Steam Workshop mod directory")
+    parser.add_argument("--localmodsdir", action="store", help="(override) location of local mod directory")
+
+    return parser.parse_args()
+
+
 # functions - cleanup_garbage_name(garbage_name)
 def cleanup_garbage_name(garbage_name: str) -> str:
     clean = garbage_name
@@ -121,7 +161,7 @@ def cleanup_garbage_name(garbage_name: str) -> str:
 # basedir    = mod base directory
 # mod_source  = type of mod installation
 #
-def load_mod_data(categories: Dict, db: Dict, basedir: Path, mod_source: str) -> Dict[str, Tuple]:
+def load_mod_data(categories: Dict, db: Dict, basedir: Path, mod_source: str, wait_on_error: bool) -> Dict[str, Tuple]:
     mod_details = {}
     folder_list = [x for x in basedir.iterdir()]
     for mod_folder in folder_list:
@@ -182,55 +222,41 @@ def load_mod_data(categories: Dict, db: Dict, basedir: Path, mod_source: str) ->
     return mod_details
 
 
+def save_results(mods_config_file: Path, doc):
+    now = time.strftime('%Y%m%d-%H%M', time.localtime(time.time()))
+    backup_file = mods_config_file.with_suffix(f".backup-{now}.xml")
+    shutil.copy(str(mods_config_file), str(backup_file))
+    print(f"Backed up ModsConfig.xml to {backup_file}.")
+
+    print("Writing new ModsConfig.xml.")
+    mods_config_str = ElementTree.tostring(doc.getroot(), encoding='unicode')
+    with open(str(mods_config_file), "w", encoding='utf-8-sig', newline="\n") as f:
+        # poor man's pretty print
+        f.write('<?xml version="1.0" encoding="utf-8"?>\n')
+        mods_config_str = mods_config_str.replace('</li><li>', '</li>\n    <li>').replace('</li></activeMods>',
+                                                                                          '</li>\n  </activeMods>')
+        f.write(mods_config_str)
+
+
+def print_contributors(database: Dict):
+    print(f"{'Contributor':<30} {'# Mods':<6}")
+    d = sorted(database["contributor"].items(), key=itemgetter(1), reverse=True)
+    for contributors in d:
+        if contributors[1] >= 20:
+            print(f"{contributors[0]:<30} {contributors[1]:>5}")
+    print("\nfor a full list of contributors visit:")
+    print("https://github.com/shakeyourbunny/RWMSDB/blob/master/CONTRIBUTING.md")
+
+
 def main():
     # ##################################################################################
     # some basic initialization and default output
-    VERSION = "0.95.1"
-
     twx, twy = shutil.get_terminal_size()
-
+    args = get_args()
     banner = f"** RWMS {VERSION} by shakeyourbunny"
     print(f"{banner:*<{twx}}")
     print("bugs: https://github.com/shakeyourbunny/RWMS/issues")
-    print("database updates: visit https://github.com/shakeyourbunny/RWMSDB/issues")
-    print("")
-
-    # ##################################################################################
-    # command-line processing
-    parser = ArgumentParser()
-
-    # configuration overrides
-    parser.add_argument("--disable-steam", action="store_true", help="(override) disable steam detection")
-    parser.add_argument("--dont-remove-unknown-mods", action="store_true", help="(override) do not remove unknown mods")
-    parser.add_argument("--openbrowser", action="store_true",
-                        help="(override) opens browser if new version available, implies force updatecheck ")
-    parser.add_argument("--disable-tweaks", action="store_true", help="(override) disable user tweaks")
-
-    # misc options
-    parser.add_argument("-d", "--dry-run", action="store_true", help="shows what would change, does not actually overrides "
-                                                                     "any file")
-    parser.add_argument("--contributors", action="store_true", help="display contributors for RWMS(DB)")
-
-    parser.add_argument("--dump-configuration", action="store_true",
-                        help="displays the current configuration RWMS is thinking of")
-    parser.add_argument("--dump-configuration-nowait", action="store_true",
-                        help="displays the current configuration RWMS is thinking of, forces no waiting (for scripts)")
-
-    parser.add_argument("--reset-to-core", action="store_true", help="reset mod list to Core only")
-
-    # delay options
-    parser.add_argument("--wait-error", action="store_true", help="(override) wait on errors")
-    parser.add_argument("--wait", action="store_true", help="(override) wait on exit")
-    parser.add_argument("--enable-delays", action="store_true", help="(override) enable some delays")
-
-    # directory options
-    parser.add_argument("--steamdir", action="store", help="(override) Steam installation directory")
-    parser.add_argument("--drmfreedir", action="store", help="(override) DRM free directory of RimWorld")
-    parser.add_argument("--configdir", action="store", help="(override) location of game configuration / save directory")
-    parser.add_argument("--workshopdir", action="store", help="(override) location of Steam Workshop mod directory")
-    parser.add_argument("--localmodsdir", action="store", help="(override) location of local mod directory")
-
-    args = parser.parse_args()
+    print("database updates: visit https://github.com/shakeyourbunny/RWMSDB/issues\n")
 
     update_check = RWMS.configuration.load_value("rwms", "updatecheck", True)
     open_browser = RWMS.configuration.load_value("rwms", "openbrowser", True)
@@ -300,10 +326,8 @@ def main():
     # start script
     if update_check:
         if RWMS.update.is_update_available(VERSION):
-            print(f'*** Update available, new version is {RWMS.update.__load_version_from_repo()} ***')
-            print("")
-            print("Release: https://github.com/shakeyourbunny/RWMS/releases")
-            print("")
+            print(f'*** Update available, new version is {RWMS.update.__load_version_from_repo()} ***\n')
+            print("Release: https://github.com/shakeyourbunny/RWMS/releases\n")
             if open_browser:
                 webbrowser.open_new("https://www.github.com/shakeyourbunny/RWMS/releases")
 
@@ -314,8 +338,7 @@ def main():
     categories_url = "https://raw.githubusercontent.com/shakeyourbunny/RWMSDB/master/rwms_db_categories.json"
     database_url = "https://raw.githubusercontent.com/shakeyourbunny/RWMSDB/master/rwmsdb.json"
 
-
-    ######################################################################################################################
+    ####################################################################################################################
     # real start of the script
 
     # load scoring mapping dict
@@ -336,23 +359,14 @@ def main():
         print(f'{len(database["db"])} known mods, {len(database["contributor"])} contributors.')
 
     if args.contributors:
-        print(f"{'Contributor':<30} {'# Mods':<6}")
-        d = sorted(database["contributor"].items(), key=itemgetter(1), reverse=True)
-        for contributors in d:
-            if contributors[1] >= 20:
-                print(f"{contributors[0]:<30} {contributors[1]:>5}")
-        print("\nfor a full list of contributors visit:")
-        print("https://github.com/shakeyourbunny/RWMSDB/blob/master/CONTRIBUTING.md")
+        print_contributors(database)
         wait_for_exit(0, wait_on_exit)
     else:
         contributors = collections.Counter(database["contributor"])
-        print("Top contributors: ", end='')
-        for c in contributors.most_common(5):
-            print(f"{c[0]} ({c[1]}), ", end='')
-        print("")
+        most_common = [f"{c[0]} ({c[1]})" for c in contributors.most_common(5)]
+        print(f"Top contributors: {', '.join(most_common)}\n")
 
     mods_config_file = RWMS.configuration.modsconfigfile()
-    print("")
     print("Loading and parsing ModsConfig.xml")
     if not mods_config_file.exists():
         RWMS.error.fatal_error(f"could not find ModsConfig.xml; detected: '{mods_config_file}'", wait_on_error)
@@ -372,23 +386,22 @@ def main():
     # check auf unknown mods
     print("Loading mod data.")
     mod_data_workshop = dict()
-    mod_data_local = dict()
 
     if not disable_steam:
         steam_workshop_dir = RWMS.configuration.detect_steamworkshop_dir()
-        if RWMS.configuration.detect_rimworld_steam() != "":
-            if not os.path.isdir(steam_workshop_dir):
-                RWMS.error.fatal_error(f"steam workshop directory '{steam_workshop_dir}' could not be found. please check "
-                                       f"your installation and / or configuration file.", wait_on_error)
+        if steam_workshop_dir is not None:
+            if not steam_workshop_dir.is_dir():
+                RWMS.error.fatal_error(f"steam workshop directory '{steam_workshop_dir}' could not be found. please "
+                                       f"check your installation and / or configuration file.", wait_on_error)
                 wait_for_exit(1, wait_on_error)
-            mod_data_workshop = load_mod_data(categories, database, steam_workshop_dir, "W")
+            mod_data_workshop = load_mod_data(categories, database, steam_workshop_dir, "W", wait_on_error)
 
     local_mod_dir = RWMS.configuration.detect_localmods_dir()
-    if not os.path.isdir(local_mod_dir):
+    if not local_mod_dir.is_dir():
         RWMS.error.fatal_error(f"local mod directory '{local_mod_dir}' could not be found. please check your installation "
                                f"and / or configuration file.", wait_on_error)
         wait_for_exit(1, wait_on_error)
-    mod_data_local = load_mod_data(categories, database, local_mod_dir, "L")
+    mod_data_local = load_mod_data(categories, database, local_mod_dir, "L", wait_on_error)
 
     mod_data_full = {**mod_data_local, **mod_data_workshop}
     mod_data_known = {}  # all found known mods, regardless of their active status
@@ -410,17 +423,13 @@ def main():
             print(f"Unknown ACTIVE mod ID {mods} found..")
             mods_unknown_active.append(mods)
 
-    print("Sorting mods.")
+    print("Sorting mods.\n")
     be_sleepy(1.0, enable_delays)
     new_list = sorted(mods_data_active, key=itemgetter(1))
-    print("")
     print(f"{len(mod_data_full)} subscribed mods, {len(mods_enabled_list)} ({len(mods_data_active) + 1} known,"
           f" {len(mods_unknown_active)} unknown) enabled mods")
     be_sleepy(2.0, enable_delays)
 
-    if not mods_config_file.exists():
-        RWMS.error.fatal_error(f"error accessing {mods_config_file}", wait_on_error)
-        sys.exit(1)
     doc = ElementTree.parse(mods_config_file)
     xml = doc.getroot()
 
@@ -547,18 +556,7 @@ def main():
 
     if write_mods_config:
         # do backup
-        backup_file = mods_config_file.with_suffix(f".backup-{now_time}.xml")
-        shutil.copy(str(mods_config_file), str(backup_file))
-        print(f"Backed up ModsConfig.xml to {backup_file}.")
-
-        print("Writing new ModsConfig.xml.")
-        mods_config_str = ElementTree.tostring(doc.getroot(), encoding='unicode')
-        with open(str(mods_config_file), "w", encoding='utf-8-sig', newline="\n") as f:
-            # poor man's pretty print
-            f.write('<?xml version="1.0" encoding="utf-8"?>\n')
-            mods_config_str = mods_config_str.replace('</li><li>', '</li>\n    <li>').replace('</li></activeMods>',
-                                                                                              '</li>\n  </activeMods>')
-            f.write(mods_config_str)
+        save_results(mods_config_file, doc)
         print("Writing done.")
     else:
         print("ModsConfig.xml was NOT modified.")
