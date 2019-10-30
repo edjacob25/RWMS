@@ -316,8 +316,8 @@ database_url = "https://raw.githubusercontent.com/shakeyourbunny/RWMSDB/master/r
 # real start of the script
 
 # load scoring mapping dict
-cat = RWMS.database.load_categories_mapping(categories_url)
-if not cat:
+categories = RWMS.database.download_database(categories_url)
+if not categories:
     RWMS.error.fatal_error("Could not load properly categories.", wait_on_error)
     wait_for_exit(1, wait_on_error)
 
