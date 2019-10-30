@@ -67,6 +67,119 @@ def print_dry_run(config_file, final_doc, mod_data):
         print(f"{i + 1} - {name} - {mod}")
 
 
+#####################################################################################################################
+# functions - cleanup_garbage_name(garbage_name)
+def cleanup_garbage_name(garbage_name: str) -> str:
+    clean = garbage_name
+    regex = re.compile(
+        r"(v|V|)\d+\.\d+(\.\d+|)([a-z]|)|\[(1.0|(A|B)\d+)\]|\((1.0|(A|B)\d+)\)|(for |R|)(1.0|(A|B)\d+)|\.1(8|9)")
+    clean = re.sub(regex, "", clean)
+    clean = re.sub(regex, "", clean)
+    clean = clean.replace(" - ", ": ").replace(" : ", ": ")
+    #
+    clean = clean.replace("  ", " ")
+    clean = " ".join(clean.split()).strip()
+
+    # cleanup ruined names
+    clean = clean.replace("()", "")
+    clean = clean.replace("[]", "")
+
+    # special cases
+    clean = clean.replace("(v. )", "")  # Sora's RimFantasy: Brutal Start (v. )
+    if clean.endswith(" Ver"):
+        clean = clean.replace(" Ver", "")  # Starship Troopers Arachnids Ver
+    if clean.endswith(" %"):
+        clean = clean.replace(" %", "")  # Tilled Soil (Rebalanced): %
+    if clean.find("[ "):
+        clean = clean.replace("[ ", "[")  # Additional Traits [ Update]
+    if clean.find("( & b19)"):
+        clean = clean.replace("( & b19)", "")  # Barky's Caravan Dogs ( & b19)
+    if clean.find("[19]"):
+        clean = clean.replace("[19]", "")  # Sailor Scouts Hair [19]
+    if clean.find("[/] Version"):
+        clean = clean.replace("[/] Version", "")  # Fueled Smelter [/] Version
+
+    if clean.endswith(":"):
+        clean = clean[:-1]
+    if clean.startswith(": "):
+        clean = clean[2:]  # : ACP: More Floors Wool Patch
+    if clean.startswith("-"):
+        clean = clean[1:]  # -FuelBurning
+
+    clean = clean.strip()
+
+    return clean
+
+
+######################################################################################################################
+# functions - read in mod data
+#
+# cats       = categories
+# db         = FULL db dict
+# basedir    = mod base directory
+# mod_source  = type of mod installation
+#
+def load_mod_data(categories: Dict, db: Dict, basedir: Path, mod_source: str) -> Dict[str, Tuple]:
+    mod_details = {}
+    folder_list = [x for x in basedir.iterdir()]
+    for mod_folder in folder_list:
+        about_xml = mod_folder / "About" / "About.xml"
+        mod_id = mod_folder.name
+        if about_xml.exists():
+            try:
+                xml = ElementTree.parse(about_xml)
+                name = xml.find('name').text
+            except ElementTree.ParseError:
+                print(f"Mod ID is '{mod_id}'")
+                print(f"** error: malformed XML in {about_xml}")
+                print("")
+                print("Please contact mod author for clarification.")
+                if RWMS.configuration.detect_rimworld_steam():
+                    workshop_url = f"https://steamcommunity.com/sharedfiles/filedetails/?id={mod_id}"
+                    print(f"(trying to workaround by loading steam workshop page {workshop_url})")
+                    try:
+                        name = str(BeautifulSoup(urlopen(workshop_url), "html.parser").title.string)
+                        if 'Steam Community :: Error' in name:
+                            RWMS.error.fatal_error("Could not find a matching mod on the workshop.", wait_on_error)
+                            sys.exit(1)
+                    except:
+                        print("Could not open workshop page. sorry.")
+                        continue
+                    name = name.replace('Steam Workshop :: ', '')
+                    print(f"Matching mod ID '{mod_folder}' with '{name}'")
+                    print("")
+                else:
+                    RWMS.error.fatal_error("(cannot do a workaround, no steam installation)", wait_on_error)
+                    sys.exit(1)
+
+            # cleanup name stuff for version garbage
+            name = cleanup_garbage_name(name)
+
+            if name in db["db"]:
+                try:
+                    score = categories[db["db"][name]][0]
+                except:
+                    print(f"FIXME: mod '{name}' has an unknown category '{db['db'][name]}'. Stop.")
+                    RWMS.error.fatal_error("please report this error to the database maintainer.", wait_on_error)
+                    sys.exit(1)
+
+                try:
+                    mod_info = (mod_id, float(score), name, mod_source)
+
+                except KeyError:
+                    RWMS.error.fatal_error(f"could not construct dictionary entry for mod {name}, score {score}",
+                                           wait_on_error)
+                    sys.exit(1)
+            else:
+                # note: need the mod source later for distinguishing local vs workshop mod in unknown mod report
+                mod_info = (mod_id, None, name, mod_source)
+
+            mod_details[mod_id] = mod_info
+        else:
+            print(f"could not find metadata for item {mod_id} (skipping, is probably a scenario)!")
+    return mod_details
+
+
 # ##################################################################################
 # some basic initialization and default output
 VERSION = "0.95.1"
@@ -197,122 +310,6 @@ if RWMS.configuration.detect_rimworld() == "":
 
 categories_url = 'https://raw.githubusercontent.com/shakeyourbunny/RWMSDB/master/rwms_db_categories.json'
 database_url = "https://raw.githubusercontent.com/shakeyourbunny/RWMSDB/master/rwmsdb.json"
-
-
-#####################################################################################################################
-# functions - cleanup_garbage_name(garbagename)
-def cleanup_garbage_name(garbagename):
-    clean = garbagename
-    regex = re.compile(
-        r"(v|V|)\d+\.\d+(\.\d+|)([a-z]|)|\[(1.0|(A|B)\d+)\]|\((1.0|(A|B)\d+)\)|(for |R|)(1.0|(A|B)\d+)|\.1(8|9)")
-    clean = re.sub(regex, "", clean)
-    clean = re.sub(regex, "", clean)
-    clean = clean.replace(" - ", ": ").replace(" : ", ": ")
-    #
-    clean = clean.replace("  ", " ")
-    clean = " ".join(clean.split()).strip()
-
-    # cleanup ruined names
-    clean = clean.replace("()", "")
-    clean = clean.replace("[]", "")
-
-    # special cases
-    clean = clean.replace("(v. )", "")  # Sora's RimFantasy: Brutal Start (v. )
-    if clean.endswith(" Ver"):
-        clean = clean.replace(" Ver", "")  # Starship Troopers Arachnids Ver
-    if clean.endswith(" %"):
-        clean = clean.replace(" %", "")  # Tilled Soil (Rebalanced): %
-    if clean.find("[ "):
-        clean = clean.replace("[ ", "[")  # Additional Traits [ Update]
-    if clean.find("( & b19)"):
-        clean = clean.replace("( & b19)", "")  # Barky's Caravan Dogs ( & b19)
-    if clean.find("[19]"):
-        clean = clean.replace("[19]", "")  # Sailor Scouts Hair [19]
-    if clean.find("[/] Version"):
-        clean = clean.replace("[/] Version", "")  # Fueled Smelter [/] Version
-
-    if clean.endswith(":"):
-        clean = clean[:-1]
-    if clean.startswith(": "):
-        clean = clean[2:]  # : ACP: More Floors Wool Patch
-    if clean.startswith("-"):
-        clean = clean[1:]  # -FuelBurning
-
-    clean = clean.strip()
-
-    return clean
-
-
-######################################################################################################################
-# functions - read in mod data
-#
-# cats       = categories
-# db         = FULL db dict
-# basedir    = mod base directory
-# modsource  = type of mod installation
-#
-def load_mod_data(cats, db, basedir, modsource):
-    mod_details = dict()
-    folder_list = os.listdir(basedir)
-    name = str()
-    for mod_dirs in folder_list:
-        aboutxml = os.path.join(basedir, mod_dirs, "About", "About.xml")
-        if os.path.isfile(aboutxml):
-            try:
-                xml = ET.parse(aboutxml)
-                name = xml.find('name').text
-            except ET.ParseError:
-                print(f"Mod ID is '{mod_dirs}'")
-                print(f"** error: malformed XML in {aboutxml}")
-                # print("Line {}, Offset {}".format(pe.lineno, pe.offset))
-                print("")
-                print("Please contact mod author for clarification.")
-                if RWMS.configuration.detect_rimworld_steam():
-                    workshopurl = "https://steamcommunity.com/sharedfiles/filedetails/?id=" + mod_dirs
-                    print(f"(trying to workaround by loading steam workshop page {workshopurl})")
-                    try:
-                        name = str(BeautifulSoup(urlopen(workshopurl), "html.parser").title.string)
-                        if 'Steam Community :: Error' in name:
-                            RWMS.error.fatal_error("Could not find a matching mod on the workshop.", wait_on_error)
-                            sys.exit(1)
-                    except:
-                        print("Could not open workshop page. sorry.")
-                    name = name.replace('Steam Workshop :: ', '')
-                    print(f"Matching mod ID '{mod_dirs}' with '{name}'")
-                    print("")
-                else:
-                    RWMS.error.fatal_error("(cannot do a workaround, no steam installation)", wait_on_error)
-                    sys.exit(1)
-
-            # cleanup name stuff for version garbage
-            name = cleanup_garbage_name(name)
-
-            if name in db["db"]:
-                try:
-                    score = cats[db["db"][name]][0]
-                except:
-                    print(f"FIXME: mod '{name}' has an unknown category '{db['db'][name]}'. Stop.")
-                    RWMS.error.fatal_error("please report this error to the database maintainer.", wait_on_error)
-                    sys.exit(1)
-
-                # print("mod {} has a score of {}".format(name, score))
-                try:
-                    mod_entry = (mod_dirs, float(score), name, modsource)
-
-                except KeyError:
-                    RWMS.error.fatal_error(
-                        f"could not construct dictionary entry for mod {name}, score {score}", wait_on_error)
-                    sys.exit(1)
-            else:
-                # print("mod '{}' is not in database, adding to unknown list.".format(name))
-                # note: need the modsource later for distinguishing local vs workshop mod in unknown mod report
-                mod_entry = (mod_dirs, None, name, modsource)
-
-            mod_details[mod_dirs] = mod_entry
-        else:
-            print("could not find metadata for item " + mod_dirs + " (skipping, is probably a scenario)!")
-            name = ""
-    return mod_details
 
 
 ######################################################################################################################
