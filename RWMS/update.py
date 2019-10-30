@@ -12,7 +12,8 @@ version_url = "https://raw.githubusercontent.com/shakeyourbunny/RWMS/master/VERS
 
 wait_on_error = RWMS.configuration.load_value("rwms", "waitforkeypress_on_error", True)
 
-def __load_version_from_repo():
+
+def __load_version_from_repo() -> str:
     try:
         data = urlopen(version_url)
 
@@ -24,11 +25,11 @@ def __load_version_from_repo():
     return version
 
 
-def is_update_available(currentversion):
-    if currentversion == "":
+def is_update_available(current_version) -> bool:
+    if current_version == "":
         return False
 
-    if __load_version_from_repo() == currentversion:
+    if __load_version_from_repo() == current_version:
         return False
     else:
         return True
