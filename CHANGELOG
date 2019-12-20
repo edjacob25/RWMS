@@ -1,5 +1,9 @@
 RWMS (RimWorldModSorter) changelog:
 
+0.95.1.3 (2019-12-20):
+fixed:
+- fixed fixed updatecheck :D
+
 0.95.1.2 (2019-12-20):
 fixed:
 - fixed update check (a hack, I know, but not permament solution)
