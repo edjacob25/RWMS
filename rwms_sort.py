@@ -69,7 +69,7 @@ def print_dry_run(config_file, final_doc, mod_data):
 
 # ##################################################################################
 # some basic initialization and default output
-VERSION = "0.95.1.1"
+VERSION = "0.95.1.2"
 
 twx, twy = shutil.get_terminal_size()
 

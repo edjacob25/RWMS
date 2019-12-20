@@ -1,5 +1,11 @@
 RWMS (RimWorldModSorter) changelog:
+
+0.95.1.2 (2019-12-20):
+fixed:
+- fixed update check (a hack, I know, but not permament solution)
+
 0.95.1.1 (2019-12-20):
+fixed:
 - changed all references from github to bitbucket
 
 This release is also called "Dirty Santa Hat Edition"
