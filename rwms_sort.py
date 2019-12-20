@@ -69,14 +69,14 @@ def print_dry_run(config_file, final_doc, mod_data):
 
 # ##################################################################################
 # some basic initialization and default output
-VERSION = "0.95.1"
+VERSION = "0.95.1.1"
 
 twx, twy = shutil.get_terminal_size()
 
 banner = "** RWMS {} by shakeyourbunny ".format(VERSION)
 print("{:*<{tw}}".format(banner, tw=twx))
-print("bugs: https://github.com/shakeyourbunny/RWMS/issues")
-print("database updates: visit https://github.com/shakeyourbunny/RWMSDB/issues")
+print("bugs: https://bitbucket.org/shakeyourbunny/rwms/issues")
+print("database updates: visit https://bitbucket.org/shakeyourbunny/rwmsdb/issues")
 print("")
 
 # ##################################################################################
@@ -186,17 +186,18 @@ if updatecheck:
     if RWMS.update.is_update_available(VERSION):
         print("*** Update available, new version is {} ***".format(RWMS.update.__load_version_from_repo()))
         print("")
-        print("Release: https://github.com/shakeyourbunny/RWMS/releases")
+        print("Release: https://bitbucket.org/shakeyourbunny/rwms/downloads/")
         print("")
         if openbrowser:
-            webbrowser.open_new("https://www.github.com/shakeyourbunny/RWMS/releases")
+            webbrowser.open_new("https://bitbucket.org/shakeyourbunny/rwms/downloads/")
 
 if RWMS.configuration.detect_rimworld() == "":
     RWMS.error.fatal_error("no valid RimWorld installation detected!", wait_on_error)
     wait_for_exit(0, wait_on_error)
 
-categories_url = 'https://raw.githubusercontent.com/shakeyourbunny/RWMSDB/master/rwms_db_categories.json'
-database_url = "https://raw.githubusercontent.com/shakeyourbunny/RWMSDB/master/rwmsdb.json"
+categories_url = "https://bitbucket.org/shakeyourbunny/rwmsdb/raw/405a41505de6b4bd79bf3061ffa8fa16f6b40bb0/rwms_db_categories" \
+                 ".json"
+database_url = "https://bitbucket.org/shakeyourbunny/rwmsdb/raw/405a41505de6b4bd79bf3061ffa8fa16f6b40bb0/rwmsdb.json"
 
 
 #####################################################################################################################
@@ -344,7 +345,7 @@ if args.contributors:
         if contributors[1] >= 20:
             print("{:<30} {:>5}".format(contributors[0], contributors[1]))
     print("\nfor a full list of contributors visit:")
-    print("https://github.com/shakeyourbunny/RWMSDB/blob/master/CONTRIBUTING.md")
+    print("https://bitbucket.org/shakeyourbunny/rwmsdb/src/master/CONTRIBUTING.md")
     wait_for_exit(0, wait_on_exit)
 else:
     contributors = collections.Counter(database["contributor"])
@@ -512,10 +513,13 @@ else:
             json.dump(DB, f, indent=True, sort_keys=True)
 
         if RWMS.issue_mgmt.is_github_configured():
-            print("Creating a new issue on the RWMSDB issue tracker.")
-            with open(unknownfile, 'r', encoding="UTF-8") as f:
-                issuebody = f.read()
-            RWMS.issue_mgmt.create_issue('unknown mods found by ' + RWMS.issue_mgmt.get_github_user(), issuebody)
+            print("For now, due to GitHub issues by itself, disabled. IGNORED.")
+            print("")
+            print("Please visit https://bitbucket.org/shakeyourbunny/rwmsdb/issues")
+            # print("Creating a new issue on the RWMSDB issue tracker.")
+            # with open(unknownfile, 'r', encoding="UTF-8") as f:
+            #    issuebody = f.read()
+            # RWMS.issue_mgmt.create_issue('unknown mods found by ' + RWMS.issue_mgmt.get_github_user(), issuebody)
         else:
             print(textwrap.fill("For the full list of unknown mods see the written data file in the current directory. " +
                                 "You can either submit the data file manually on the RWMSDB issue tracker or on Steam / " +
@@ -531,7 +535,7 @@ else:
             if data.lower() == "y":
                 print("Trying to open the default webbrowser for RWMSDB issues page.")
                 print("")
-                webbrowser.open_new("https://www.github.com/shakeyourbunny/RWMSDB/issues")
+                webbrowser.open_new("https://bitbucket.org/shakeyourbunny/rwmsdb/issues")
 
         if dontremoveunknown:
             print("Unknown, ACTIVE mods will be written at the end of the mod list.")

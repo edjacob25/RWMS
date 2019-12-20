@@ -1,14 +1,9 @@
 # RWMS - RimWorld Mod Sorter
 
-[Download](https://www.github.com/shakeyourbunny/RWMS/releases) (includes Windows executable)
-
-![version](https://img.shields.io/github/release/shakeyourbunny/RWMS.svg?style=plastic "version")
-[![Date Latest](https://img.shields.io/github/release-date/shakeyourbunny/RWMS.svg?style=plastic)](https://github.com/shakeyourbunny/RWMS/releases/latest)
-[![Commits Since Latest](https://img.shields.io/github/commits-since/shakeyourbunny/RWMS/latest.svg?style=plastic)](https://github.com/shakeyourbunny/RWMS/commits/master)
-![version](https://img.shields.io/github/downloads/shakeyourbunny/RWMS/total.svg?style=plastic "version")
+[Download](https://bitbucket.org/shakeyourbunny/rwms/downloads/?tab=downloads) (includes Windows executable)
 
 #### Links
-Homepage: https://github.com/shakeyourbunny/RWMS 
+Homepage: https://bitbucket.org/shakeyourbunny/rwms/
 
 Discussion thread on Ludeon: https://ludeon.com/forums/index.php?topic=48518.0
 
@@ -262,10 +257,10 @@ modified:
 - may lead to unknown mods in older revisions of the script
 
 ## History
-See https://github.com/shakeyourbunny/RWMS/blob/master/CHANGELOG
+See https://bitbucket.org/shakeyourbunny/rwms/src/master/CHANGELOG
 
 ## Contributors
-see https://github.com/shakeyourbunny/RWMS/blob/master/CONTRIBUTORS.md
+see https://bitbucket.org/shakeyourbunny/rwms/src/master/CONTRIBUTORS.md
 
 ## License
 Script written by shakeyourbunny <shakeyourbunny@gmail.com> 
