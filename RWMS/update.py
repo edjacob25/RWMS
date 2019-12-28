@@ -8,7 +8,7 @@ from urllib.request import urlopen
 import RWMS.configuration
 import RWMS.error
 
-version_url = "https://api.bitbucket.org/2.0/repositories/shakeyourbunny/rwmsdb/src/master/VERSION"
+version_url = "https://api.bitbucket.org/2.0/repositories/shakeyourbunny/rwms/src/master/VERSION"
 
 wait_on_error = RWMS.configuration.load_value("rwms", "waitforkeypress_on_error", True)
 
