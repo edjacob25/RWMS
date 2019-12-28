@@ -1,4 +1,8 @@
 RWMS (RimWorldModSorter) changelog:
+0.95.1.4 (2019-12-28):
+fixed:
+- fix bitbucket database and categories location
+- fix update version check
 
 0.95.1.3 (2019-12-20):
 fixed:

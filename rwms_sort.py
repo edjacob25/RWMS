@@ -69,7 +69,7 @@ def print_dry_run(config_file, final_doc, mod_data):
 
 # ##################################################################################
 # some basic initialization and default output
-VERSION = "0.95.1.3"
+VERSION = "0.95.1.4"
 
 twx, twy = shutil.get_terminal_size()
 
@@ -195,9 +195,8 @@ if RWMS.configuration.detect_rimworld() == "":
     RWMS.error.fatal_error("no valid RimWorld installation detected!", wait_on_error)
     wait_for_exit(0, wait_on_error)
 
-categories_url = "https://bitbucket.org/shakeyourbunny/rwmsdb/raw/405a41505de6b4bd79bf3061ffa8fa16f6b40bb0/rwms_db_categories" \
-                 ".json"
-database_url = "https://bitbucket.org/shakeyourbunny/rwmsdb/raw/405a41505de6b4bd79bf3061ffa8fa16f6b40bb0/rwmsdb.json"
+categories_url = "https://api.bitbucket.org/2.0/repositories/shakeyourbunny/rwmsdb/src/master/rwms_db_categories.json"
+database_url = "https://api.bitbucket.org/2.0/repositories/shakeyourbunny/rwmsdb/src/master/rwmsdb.json"
 
 
 #####################################################################################################################
