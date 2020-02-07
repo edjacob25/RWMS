@@ -24,8 +24,7 @@ import RWMS.error
 import RWMS.issue_mgmt
 import RWMS.update
 
-VERSION = "0.95.1"
-
+VERSION = "0.95.1.4"
 
 # ##################################################################################
 # helper functions
@@ -245,18 +244,20 @@ def print_contributors(database: Dict):
         if contributors[1] >= 20:
             print(f"{contributors[0]:<30} {contributors[1]:>5}")
     print("\nfor a full list of contributors visit:")
-    print("https://github.com/shakeyourbunny/RWMSDB/blob/master/CONTRIBUTING.md")
+    print("https://bitbucket.org/shakeyourbunny/rwmsdb/src/master/CONTRIBUTING.md")
 
 
 def main():
     # ##################################################################################
     # some basic initialization and default output
     twx, twy = shutil.get_terminal_size()
-    args = get_args()
+
     banner = f"** RWMS {VERSION} by shakeyourbunny"
     print(f"{banner:*<{twx}}")
-    print("bugs: https://github.com/shakeyourbunny/RWMS/issues")
-    print("database updates: visit https://github.com/shakeyourbunny/RWMSDB/issues\n")
+    print("bugs: https://bitbucket.org/shakeyourbunny/rwms/issues")
+    print("database updates: visit https://bitbucket.org/shakeyourbunny/rwmsdb/issues\n")
+
+    args = get_args()
 
     update_check = RWMS.configuration.load_value("rwms", "updatecheck", True)
     open_browser = RWMS.configuration.load_value("rwms", "openbrowser", True)
@@ -327,16 +328,16 @@ def main():
     if update_check:
         if RWMS.update.is_update_available(VERSION):
             print(f'*** Update available, new version is {RWMS.update.__load_version_from_repo()} ***\n')
-            print("Release: https://github.com/shakeyourbunny/RWMS/releases\n")
+            print("Release: https://bitbucket.org/shakeyourbunny/rwms/downloads/")
             if open_browser:
-                webbrowser.open_new("https://www.github.com/shakeyourbunny/RWMS/releases")
+                webbrowser.open_new("https://bitbucket.org/shakeyourbunny/rwms/downloads/")
 
     if RWMS.configuration.detect_rimworld() == "":
         RWMS.error.fatal_error("no valid RimWorld installation detected!", wait_on_error)
         wait_for_exit(0, wait_on_error)
 
-    categories_url = "https://raw.githubusercontent.com/shakeyourbunny/RWMSDB/master/rwms_db_categories.json"
-    database_url = "https://raw.githubusercontent.com/shakeyourbunny/RWMSDB/master/rwmsdb.json"
+    categories_url = "https://api.bitbucket.org/2.0/repositories/shakeyourbunny/rwmsdb/src/master/rwms_db_categories.json"
+    database_url = "https://api.bitbucket.org/2.0/repositories/shakeyourbunny/rwmsdb/src/master/rwmsdb.json"
 
     ####################################################################################################################
     # real start of the script
@@ -514,10 +515,12 @@ def main():
                 json.dump(DB, f, indent=True, sort_keys=True)
 
             if RWMS.issue_mgmt.is_github_configured():
-                print("Creating a new issue on the RWMSDB issue tracker.")
-                with open(unknownfile, 'r', encoding="UTF-8") as f:
-                    issuebody = f.read()
-                RWMS.issue_mgmt.create_issue('unknown mods found by ' + RWMS.issue_mgmt.get_github_user(), issuebody)
+                print("For now, due to GitHub issues by itself, disabled. IGNORED.\n")
+                print("Please visit https://bitbucket.org/shakeyourbunny/rwmsdb/issues")
+                # print("Creating a new issue on the RWMSDB issue tracker.")
+                # with open(unknownfile, 'r', encoding="UTF-8") as f:
+                #     issuebody = f.read()
+                # RWMS.issue_mgmt.create_issue('unknown mods found by ' + RWMS.issue_mgmt.get_github_user(), issuebody)
             else:
                 print(textwrap.fill("For the full list of unknown mods see the written data file in the current "
                                     "directory. You can either submit the data file manually on the RWMSDB issue tracker "
@@ -531,9 +534,8 @@ def main():
                     if data.lower() in ('y', 'n'):
                         break
                 if data.lower() == "y":
-                    print("Trying to open the default webbrowser for RWMSDB issues page.")
-                    print("")
-                    webbrowser.open_new("https://www.github.com/shakeyourbunny/RWMSDB/issues")
+                    print("Trying to open the default webbrowser for RWMSDB issues page.\n")
+                    webbrowser.open_new("https://bitbucket.org/shakeyourbunny/rwmsdb/issues")
 
             if dont_remove_unknown:
                 print("Unknown, ACTIVE mods will be written at the end of the mod list.")
