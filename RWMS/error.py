@@ -5,12 +5,11 @@ import sys
 
 
 def fatal_error(message, wait=True):
-    print("*** fatal error: {}".format(message))
-    print("")
+    print(f"*** fatal error: {message}\n")
     if wait:
         input("Press ENTER to terminate the program.")
     sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pass

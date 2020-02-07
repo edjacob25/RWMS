@@ -21,7 +21,7 @@ def __load_version_from_repo() -> str:
         RWMS.error.fatal_error("** updatecheck: could not load update URL.", wait_on_error)
         sys.exit(1)
 
-    version = data.read().decode('utf-8').strip()
+    version = data.read().decode("utf-8").strip()
     return version
 
 
@@ -36,5 +36,5 @@ def is_update_available(current_version) -> bool:
 
 
 # debug
-if __name__ == '__main__':
+if __name__ == "__main__":
     print(__load_version_from_repo())

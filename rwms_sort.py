@@ -35,8 +35,7 @@ def be_sleepy(how_long: float, ed=True):
 
 def wait_for_exit(exit_code, wfo=True):
     if wfo:
-        print("")
-        input("Press ENTER to end program.")
+        input("\nPress ENTER to end program.")
     sys.exit(exit_code)
 
 
@@ -49,8 +48,8 @@ def check_directory(directory: str):
 
 def print_dry_run(config_file, final_doc, mod_data):
     print("This is a dry run, nothing will be changed\n")
-    initial = [x.text for x in ElementTree.parse(config_file).getroot().find('activeMods').findall('li')]
-    final = [x.text for x in final_doc.getroot().find('activeMods').findall('li')]
+    initial = [x.text for x in ElementTree.parse(config_file).getroot().find("activeMods").findall("li")]
+    final = [x.text for x in final_doc.getroot().find("activeMods").findall("li")]
     for i, mod in enumerate(initial):
         initial_pos = i + 1
         name = mod_data[mod][2]
@@ -77,19 +76,27 @@ def get_args() -> Namespace:
     # configuration overrides
     parser.add_argument("--disable-steam", action="store_true", help="(override) disable steam detection")
     parser.add_argument("--dont-remove-unknown-mods", action="store_true", help="(override) do not remove unknown mods")
-    parser.add_argument("--openbrowser", action="store_true", help="(override) opens browser if new version available, "
-                                                                   "implies force updatecheck ")
+    parser.add_argument(
+        "--openbrowser",
+        action="store_true",
+        help="(override) opens browser if new version available, " "implies force updatecheck ",
+    )
     parser.add_argument("--disable-tweaks", action="store_true", help="(override) disable user tweaks")
 
     # misc options
-    parser.add_argument("-d", "--dry-run", action="store_true", help="shows what would change, does not actually "
-                                                                     "overrides any file")
+    parser.add_argument(
+        "-d", "--dry-run", action="store_true", help="shows what would change, does not actually " "overrides any file"
+    )
     parser.add_argument("--contributors", action="store_true", help="display contributors for RWMS(DB)")
 
-    parser.add_argument("--dump-configuration", action="store_true",
-                        help="displays the current configuration RWMS is thinking of")
-    parser.add_argument("--dump-configuration-nowait", action="store_true",
-                        help="displays the current configuration RWMS is thinking of, forces no waiting (for scripts)")
+    parser.add_argument(
+        "--dump-configuration", action="store_true", help="displays the current configuration RWMS is thinking of"
+    )
+    parser.add_argument(
+        "--dump-configuration-nowait",
+        action="store_true",
+        help="displays the current configuration RWMS is thinking of, forces no waiting (for scripts)",
+    )
 
     parser.add_argument("--reset-to-core", action="store_true", help="reset mod list to Core only")
 
@@ -101,8 +108,9 @@ def get_args() -> Namespace:
     # directory options
     parser.add_argument("--steamdir", action="store", help="(override) Steam installation directory")
     parser.add_argument("--drmfreedir", action="store", help="(override) DRM free directory of RimWorld")
-    parser.add_argument("--configdir", action="store",
-                        help="(override) location of game configuration / save directory")
+    parser.add_argument(
+        "--configdir", action="store", help="(override) location of game configuration / save directory"
+    )
     parser.add_argument("--workshopdir", action="store", help="(override) location of Steam Workshop mod directory")
     parser.add_argument("--localmodsdir", action="store", help="(override) location of local mod directory")
 
@@ -113,7 +121,8 @@ def get_args() -> Namespace:
 def cleanup_garbage_name(garbage_name: str) -> str:
     clean = garbage_name
     regex = re.compile(
-        r"(v|V|)\d+\.\d+(\.\d+|)([a-z]|)|\[(1.0|(A|B)\d+)\]|\((1.0|(A|B)\d+)\)|(for |R|)(1.0|(A|B)\d+)|\.1(8|9)")
+        r"(v|V|)\d+\.\d+(\.\d+|)([a-z]|)|\[(1.0|(A|B)\d+)\]|\((1.0|(A|B)\d+)\)|(for |R|)(1.0|(A|B)\d+)|\.1(8|9)"
+    )
     clean = re.sub(regex, "", clean)
     clean = re.sub(regex, "", clean)
     clean = clean.replace(" - ", ": ").replace(" : ", ": ")
@@ -169,26 +178,24 @@ def load_mod_data(categories: Dict, db: Dict, basedir: Path, mod_source: str, wa
         if about_xml.exists():
             try:
                 xml = ElementTree.parse(about_xml)
-                name = xml.find('name').text
+                name = xml.find("name").text
             except ElementTree.ParseError:
                 print(f"Mod ID is '{mod_id}'")
-                print(f"** error: malformed XML in {about_xml}")
-                print("")
+                print(f"** error: malformed XML in {about_xml}\n")
                 print("Please contact mod author for clarification.")
                 if RWMS.configuration.detect_rimworld_steam():
                     workshop_url = f"https://steamcommunity.com/sharedfiles/filedetails/?id={mod_id}"
                     print(f"(trying to workaround by loading steam workshop page {workshop_url})")
                     try:
                         name = str(BeautifulSoup(urlopen(workshop_url), "html.parser").title.string)
-                        if 'Steam Community :: Error' in name:
+                        if "Steam Community :: Error" in name:
                             RWMS.error.fatal_error("Could not find a matching mod on the workshop.", wait_on_error)
                             sys.exit(1)
                     except:
                         print("Could not open workshop page. sorry.")
                         continue
-                    name = name.replace('Steam Workshop :: ', '')
-                    print(f"Matching mod ID '{mod_folder}' with '{name}'")
-                    print("")
+                    name = name.replace("Steam Workshop :: ", "")
+                    print(f"Matching mod ID '{mod_folder}' with '{name}'\n")
                 else:
                     RWMS.error.fatal_error("(cannot do a workaround, no steam installation)", wait_on_error)
                     sys.exit(1)
@@ -208,8 +215,9 @@ def load_mod_data(categories: Dict, db: Dict, basedir: Path, mod_source: str, wa
                     mod_info = (mod_id, float(score), name, mod_source)
 
                 except KeyError:
-                    RWMS.error.fatal_error(f"could not construct dictionary entry for mod {name}, score {score}",
-                                           wait_on_error)
+                    RWMS.error.fatal_error(
+                        f"could not construct dictionary entry for mod {name}, score {score}", wait_on_error
+                    )
                     sys.exit(1)
             else:
                 # note: need the mod source later for distinguishing local vs workshop mod in unknown mod report
@@ -222,18 +230,19 @@ def load_mod_data(categories: Dict, db: Dict, basedir: Path, mod_source: str, wa
 
 
 def save_results(mods_config_file: Path, doc):
-    now = time.strftime('%Y%m%d-%H%M', time.localtime(time.time()))
+    now = time.strftime("%Y%m%d-%H%M", time.localtime(time.time()))
     backup_file = mods_config_file.with_suffix(f".backup-{now}.xml")
     shutil.copy(str(mods_config_file), str(backup_file))
     print(f"Backed up ModsConfig.xml to {backup_file}.")
 
     print("Writing new ModsConfig.xml.")
-    mods_config_str = ElementTree.tostring(doc.getroot(), encoding='unicode')
-    with open(str(mods_config_file), "w", encoding='utf-8-sig', newline="\n") as f:
+    mods_config_str = ElementTree.tostring(doc.getroot(), encoding="unicode")
+    with open(str(mods_config_file), "w", encoding="utf-8-sig", newline="\n") as f:
         # poor man's pretty print
         f.write('<?xml version="1.0" encoding="utf-8"?>\n')
-        mods_config_str = mods_config_str.replace('</li><li>', '</li>\n    <li>').replace('</li></activeMods>',
-                                                                                          '</li>\n  </activeMods>')
+        mods_config_str = mods_config_str.replace("</li><li>", "</li>\n    <li>").replace(
+            "</li></activeMods>", "</li>\n  </activeMods>"
+        )
         f.write(mods_config_str)
 
 
@@ -327,7 +336,7 @@ def main():
     # start script
     if update_check:
         if RWMS.update.is_update_available(VERSION):
-            print(f'*** Update available, new version is {RWMS.update.__load_version_from_repo()} ***\n')
+            print(f"*** Update available, new version is {RWMS.update.__load_version_from_repo()} ***\n")
             print("Release: https://bitbucket.org/shakeyourbunny/rwms/downloads/")
             if open_browser:
                 webbrowser.open_new("https://bitbucket.org/shakeyourbunny/rwms/downloads/")
@@ -336,7 +345,9 @@ def main():
         RWMS.error.fatal_error("no valid RimWorld installation detected!", wait_on_error)
         wait_for_exit(0, wait_on_error)
 
-    categories_url = "https://api.bitbucket.org/2.0/repositories/shakeyourbunny/rwmsdb/src/master/rwms_db_categories.json"
+    categories_url = (
+        "https://api.bitbucket.org/2.0/repositories/shakeyourbunny/rwmsdb/src/master/rwms_db_categories.json"
+    )
     database_url = "https://api.bitbucket.org/2.0/repositories/shakeyourbunny/rwmsdb/src/master/rwmsdb.json"
 
     ####################################################################################################################
@@ -355,8 +366,7 @@ def main():
         RWMS.error.fatal_error(f"Error loading scoring database {database_url}.", wait_on_error)
         wait_for_exit(1, wait_on_error)
     else:
-        print("")
-        print(f"Database (v{database['version']}, date: {database['timestamp']}) successfully loaded.")
+        print(f"\nDatabase (v{database['version']}, date: {database['timestamp']}) successfully loaded.")
         print(f'{len(database["db"])} known mods, {len(database["contributor"])} contributors.')
 
     if args.contributors:
@@ -379,8 +389,8 @@ def main():
         RWMS.error.fatal_error("could not parse XML from ModsConfig.xml.", wait_on_error)
         wait_for_exit(1, wait_on_error)
 
-    xml = xml.find('activeMods')
-    mods_enabled_list = [t.text for t in xml.findall('li')]
+    xml = xml.find("activeMods")
+    mods_enabled_list = [t.text for t in xml.findall("li")]
     if "Core" not in mods_enabled_list:
         mods_enabled_list.append("Core")
 
@@ -392,15 +402,21 @@ def main():
         steam_workshop_dir = RWMS.configuration.detect_steamworkshop_dir()
         if steam_workshop_dir is not None:
             if not steam_workshop_dir.is_dir():
-                RWMS.error.fatal_error(f"steam workshop directory '{steam_workshop_dir}' could not be found. please "
-                                       f"check your installation and / or configuration file.", wait_on_error)
+                RWMS.error.fatal_error(
+                    f"steam workshop directory '{steam_workshop_dir}' could not be found. please "
+                    f"check your installation and / or configuration file.",
+                    wait_on_error,
+                )
                 wait_for_exit(1, wait_on_error)
             mod_data_workshop = load_mod_data(categories, database, steam_workshop_dir, "W", wait_on_error)
 
     local_mod_dir = RWMS.configuration.detect_localmods_dir()
     if not local_mod_dir.is_dir():
-        RWMS.error.fatal_error(f"local mod directory '{local_mod_dir}' could not be found. please check your installation "
-                               f"and / or configuration file.", wait_on_error)
+        RWMS.error.fatal_error(
+            f"local mod directory '{local_mod_dir}' could not be found. please check your installation "
+            f"and / or configuration file.",
+            wait_on_error,
+        )
         wait_for_exit(1, wait_on_error)
     mod_data_local = load_mod_data(categories, database, local_mod_dir, "L", wait_on_error)
 
@@ -427,37 +443,39 @@ def main():
     print("Sorting mods.\n")
     be_sleepy(1.0, enable_delays)
     new_list = sorted(mods_data_active, key=itemgetter(1))
-    print(f"{len(mod_data_full)} subscribed mods, {len(mods_enabled_list)} ({len(mods_data_active) + 1} known,"
-          f" {len(mods_unknown_active)} unknown) enabled mods")
+    print(
+        f"{len(mod_data_full)} subscribed mods, {len(mods_enabled_list)} ({len(mods_data_active) + 1} known,"
+        f" {len(mods_unknown_active)} unknown) enabled mods"
+    )
     be_sleepy(2.0, enable_delays)
 
     doc = ElementTree.parse(mods_config_file)
     xml = doc.getroot()
 
     try:
-        rimworld_version = xml.find('version').text
+        rimworld_version = xml.find("version").text
     except:
         try:
-            rimworld_version = xml.find('buildNumber').text
+            rimworld_version = xml.find("buildNumber").text
         except:
             rimworld_version = "unknown"
 
-    xml = xml.find('activeMods')
-    for li in xml.findall('li'):
+    xml = xml.find("activeMods")
+    for li in xml.findall("li"):
         xml.remove(li)
 
-    now_time = time.strftime('%Y%m%d-%H%M', time.localtime(time.time()))
+    now_time = time.strftime("%Y%m%d-%H%M", time.localtime(time.time()))
 
     write_mods_config = False
 
     if args.reset_to_core:
         while True:
             data = input("Do you want to reset your mod list to Core only (y/n)? ")
-            if data.lower() in ('y', 'n'):
+            if data.lower() in ("y", "n"):
                 break
         if data.lower() == "y":
             print("Resetting your ModsConfig.xml to Core only!")
-            xml_sorted = ElementTree.SubElement(xml, 'li')
+            xml_sorted = ElementTree.SubElement(xml, "li")
             xml_sorted.text = "Core"
             write_mods_config = True
     else:
@@ -466,7 +484,7 @@ def main():
             if mods[0] == "":
                 print("skipping, empty?")
             else:
-                xml_sorted = ElementTree.SubElement(xml, 'li')
+                xml_sorted = ElementTree.SubElement(xml, "li")
                 xml_sorted.text = str(mods[0])
 
         # handle unknown active mods if dont-remove-unknown-mods enabled
@@ -476,13 +494,12 @@ def main():
                 if mods == "":
                     print("skipping, empty?")
                 else:
-                    xml_sorted = ElementTree.SubElement(xml, 'li')
+                    xml_sorted = ElementTree.SubElement(xml, "li")
                     xml_sorted.text = str(mods)
 
         # generate unknown mod report for all found unknown mods, regardless of their active status
         if mod_data_unknown:
-            print("")
-            print("Generating unknown mods report.")
+            print("\nGenerating unknown mods report.")
             DB = dict()
             DB["version"] = 2
 
@@ -509,8 +526,7 @@ def main():
             DB["unknown"] = unknown_diff
 
             unknownfile = f"rwms_unknown_mods_{now_time}.json.txt"
-            print("Writing unknown mods report.")
-            print("")
+            print("Writing unknown mods report.\n")
             with open(unknownfile, "w", encoding="UTF-8", newline="\n") as f:
                 json.dump(DB, f, indent=True, sort_keys=True)
 
@@ -522,16 +538,19 @@ def main():
                 #     issuebody = f.read()
                 # RWMS.issue_mgmt.create_issue('unknown mods found by ' + RWMS.issue_mgmt.get_github_user(), issuebody)
             else:
-                print(textwrap.fill("For the full list of unknown mods see the written data file in the current "
-                                    "directory. You can either submit the data file manually on the RWMSDB issue tracker "
-                                    "or on Steam / Ludeon forum thread. Thank you!", 78))
-                print("")
-                print(f"Data file name is {unknownfile}")
-                print("")
+                print(
+                    textwrap.fill(
+                        "For the full list of unknown mods see the written data file in the current "
+                        "directory. You can either submit the data file manually on the RWMSDB issue tracker "
+                        "or on Steam / Ludeon forum thread. Thank you!",
+                        78,
+                    )
+                )
+                print(f"\nData file name is {unknownfile}\n")
 
                 while True:
                     data = input("Do you want to open the RWMSDB issues web page in your default browser (y/n): ")
-                    if data.lower() in ('y', 'n'):
+                    if data.lower() in ("y", "n"):
                         break
                 if data.lower() == "y":
                     print("Trying to open the default webbrowser for RWMSDB issues page.\n")
@@ -551,9 +570,9 @@ def main():
         # ask for confirmation to write the ModsConfig.xml anyway
         while True and not args.dry_run:
             data = input("Do you REALLY want to write ModsConfig.xml (y/n): ")
-            if data.lower() in ('y', 'n'):
+            if data.lower() in ("y", "n"):
                 break
-        if data.lower() == 'y':
+        if data.lower() == "y":
             write_mods_config = True
 
     if write_mods_config:
@@ -566,5 +585,5 @@ def main():
     wait_for_exit(0, wait_on_exit)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -19,7 +19,7 @@ def configuration_file() -> Path:
     """
 
     # check, if script is compiled with pyinstaller
-    if getattr(sys, 'frozen', False):
+    if getattr(sys, "frozen", False):
         mypath = os.path.dirname(sys.executable)
         base_path = Path(".").parent
     elif __file__:
@@ -57,7 +57,7 @@ def load_value(section, entry, is_bool=False) -> Union[str, bool]:
         else:
             value = cfg.get(section, entry, raw=True)
     except:
-        print("Error parsing entry '{}', section '{}' from configuration file '{}'".format(entry, section, configfile))
+        print(f"Error parsing entry '{entry}', section '{section}' from configuration file '{configfile}'")
         input("Press ENTER to end program.")
         sys.exit(1)
     return value
@@ -205,44 +205,40 @@ def __dump_configuration():
     dumps complete configuration of RMWS to stdout
     """
     print("pyinstaller configuration")
-    frozen = 'not'
-    if getattr(sys, 'frozen', False):
+    frozen = "not"
+    if getattr(sys, "frozen", False):
         # we are running in a bundle
-        frozen = 'ever so'
+        frozen = "ever so"
         bundle_dir = sys._MEIPASS  # pylint: disable=no-member
     else:
         # we are running in a normal Python environment
         bundle_dir = os.path.dirname(os.path.abspath(__file__))
-    print('we are', frozen, 'frozen')
-    print('bundle dir is', bundle_dir)
-    print('sys.argv[0] is', sys.argv[0])
-    print('sys.executable is', sys.executable)
-    print('os.getcwd is', os.getcwd())
-    print('sys.platform is', sys.platform)
-    print("")
-    print("configuration file is {}\n".format(configuration_file()))
+    print(f"we are {frozen} frozen")
+    print(f"bundle dir is {bundle_dir}")
+    print(f"sys.argv[0] is {sys.argv[0]}")
+    print(f"sys.executable is {sys.executable}")
+    print(f"os.getcwd is {os.getcwd()}")
+    print(f"sys.platform is {sys.platform}")
+    print(f"configuration file is {configuration_file()}\n")
     print("Current OS agnostic configuration")
     if detect_rimworld_steam() is not None:
-        print("")
-        print("Steam is on .....................: " + __check_dir(detect_steam()))
-        print("")
-    print("RimWorld folder .................: " + __check_dir(detect_rimworld()))
-    print("RimWorld configuration folder ...: " + __check_dir(detect_rimworld_configdir()))
-    print("RimWorld local mods folder ......: " + __check_dir(detect_localmods_dir()))
-    print("RimWorld steam workshop folder ..: " + __check_dir(detect_steamworkshop_dir()))
+        print(f"\nSteam is on .....................: {__check_dir(detect_steam())}\n")
+    print(f"RimWorld folder .................: {__check_dir(detect_rimworld())}")
+    print(f"RimWorld configuration folder ...: {__check_dir(detect_rimworld_configdir())}")
+    print(f"RimWorld local mods folder ......: {__check_dir(detect_localmods_dir())}")
+    print(f"RimWorld steam workshop folder ..: {__check_dir(detect_steamworkshop_dir())}")
 
     if modsconfigfile() != "":
-        print("RimWorld ModsConfig.xml .........: " + __check_file(modsconfigfile()))
-        print("")
-        print("Updatecheck .....................: {}".format(load_value("rwms", "updatecheck")))
-        print("Open Browser ....................: {}".format(load_value("rwms", "openbrowser")))
-        print("Wait on Error ...................: {}".format(load_value("rwms", "waitforkeypress_on_error")))
-        print("Wait on Exit ....................: {}".format(load_value("rwms", "waitforkeypress_on_exit")))
-        print("Enable delays in output .........: {}".format(load_value("rwms", "enabledelaysinoutput")))
-        print("Disable Steam Checks ............: {}".format(load_value("rwms", "disablesteam")))
-        print("Do not remove unknown mods ......: {}".format(load_value("rwms", "dontremoveunknown")))
-        print("Tweaks are disabled .............: {}".format(load_value("rwms", "disabletweaks")))
-        print("")
+        print(f"RimWorld ModsConfig.xml .........: {__check_file(modsconfigfile())}\n")
+        print(f"Updatecheck .....................: {load_value('rwms', 'updatecheck')}")
+        print(f"Open Browser ....................: {load_value('rwms', 'openbrowser')}")
+        print(f"Wait on Error ...................: {load_value('rwms', 'waitforkeypress_on_error')}")
+        print(f"Wait on Exit ....................: {load_value('rwms', 'waitforkeypress_on_exit')}")
+        print(f"Enable delays in output .........: {load_value('rwms', 'enabledelaysinoutput')}")
+        print(f"Disable Steam Checks ............: {load_value('rwms', 'disablesteam')}")
+        print(f"Do not remove unknown mods ......: {load_value('rwms', 'dontremoveunknown')}")
+        print(f"Tweaks are disabled .............: {load_value('rwms', 'disabletweaks')}\n")
+
         if load_value("github", "github_username"):
             print("GitHub username .................: is set, not displaying it.")
         if load_value("github", "github_password"):
@@ -252,7 +248,7 @@ def __dump_configuration():
 
 
 # debug
-if __name__ == '__main__':
+if __name__ == "__main__":
     __dump_configuration()
 
     print("")

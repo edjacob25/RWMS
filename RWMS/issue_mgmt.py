@@ -19,7 +19,7 @@ def get_github_token():
 
 
 def is_github_configured():
-    return (get_github_user() and get_github_token())
+    return get_github_user() and get_github_token()
 
 
 def create_issue(title, body):
@@ -32,32 +32,26 @@ def create_issue(title, body):
     REPO_OWNER = "shakeyourbunny"
     REPO_NAME = "RWMSDB"
 
-    url = 'https://api.github.com/repos/{}/{}/issues'.format(REPO_OWNER, REPO_NAME)
+    url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/issues"
 
     session = requests.Session()
     session.auth = (USERNAME, TOKEN)
 
     # Create our issue
-    data = {
-        'title': title,
-        'body': body
-    }
+    data = {"title": title, "body": body}
     r = session.post(url, json.dumps(data))
 
     ok = False
     if r.status_code == 201:
-        print("Successfully created issue {}.".format(title))
-        print("")
+        print(f"Successfully created issue {title}.\n")
         # print(r.content)
-        print("Your issue URL is: {}".format(json.loads(r.content)["url"]))
-        print("")
+        print(f"Your issue URL is: {json.loads(r.content)['url']}\n")
         time.sleep(2)
         ok = True
     else:
-        print("Could not create issue {0:s}".format(title))
-        print("Status Code: {}".format(r.status_code))
-        print("Response:\n{}\n".format(r.content))
-        print("")
+        print(f"Could not create issue {title:s}")
+        print(f"Status Code: {r.status_code}")
+        print(f"Response:\n{r.content}\n\n")
         print("Please contact the author with the full message from above. Thank you.")
         time.sleep(2)
         ok = False
@@ -67,11 +61,11 @@ def create_issue(title, body):
 
 
 # debug
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     if is_github_configured():
-        print("Github User: {}".format(get_github_user()))
-        print("Github Token: {}".format(get_github_token()))
+        print(f"Github User: {get_github_user()}")
+        print(f"Github Token: {get_github_token()}")
     else:
         print("Github configuration incomplete (user and/or token).")
 
